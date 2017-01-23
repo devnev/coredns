@@ -81,7 +81,7 @@ func (k *Kubernetes) Services(state request.Request, exact bool, opt middleware.
 
 	r, e := k.parseRequest(state.Name(), state.Type())
 	if e != nil {
-		return nil, nil, e
+		return nil, nil, errInvalidRequest
 	}
 
 	switch state.Type() {
@@ -224,7 +224,7 @@ func (k *Kubernetes) parseRequest(lowerCasedName, qtype string) (r recordRequest
 	}
 
 	offset := 0
-	if len(segs) == 5 {
+	if qtype == "SRV" && len(segs) >= 5 {
 		// This is a SRV style request, get first two elements as port and
 		// protocol, stripping leading underscores if present.
 		if segs[0][0] == '_' {
@@ -247,7 +247,7 @@ func (k *Kubernetes) parseRequest(lowerCasedName, qtype string) (r recordRequest
 			}
 		}
 		offset = 2
-	} else if len(segs) == 4 {
+	} else if qtype == "A" && len(segs) >= 4 {
 		// This is an endpoint A style request. Get first element as endpoint.
 		r.endpoint = segs[0]
 		offset = 1
